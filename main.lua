@@ -63,7 +63,7 @@ function love.update(dt)
 					v.y = my
 					if love.mouse.isDown(1) then
 						for ii,b in ipairs(spots) do
-							if mx < b.x + b.w and mx > b.x and my < b.y + b.h and my > b.y then
+							if mx < b.x + b.w and mx > b.x and my < b.y + b.h and my > b.y and b.resident == "neutral" then
 								v.x = b.x + 15
 								v.y = b.y + 15
 								v.state = "static"
@@ -81,6 +81,7 @@ function love.update(dt)
 					if love.mouse.isDown(1) and mouseaction == "" then
 						v.state = "moving"
 						mouseaction = "moving"
+						spots[v.placement].resident = "neutral"
 					end
 				end
 				if v.state == "moving" then
@@ -90,7 +91,7 @@ function love.update(dt)
 						for ii,b in ipairs(spots) do
 							if mx < b.x + b.w and mx > b.x and my < b.y + b.h and my > b.y then
 								for index,value in ipairs(spots[v.placement].cons) do
-									if value == b.id or (b.id == v.placement) then
+									if (value == b.id and b.resident == "neutral") or (b.id == v.placement) then
 										v.x = b.x + 15
 										v.y = b.y + 15
 										v.state = "static"
@@ -118,7 +119,6 @@ function love.update(dt)
 		end
 		
 	end
-		
 	
 	if love.keyboard.isDown("space") then
 		print("  ")
