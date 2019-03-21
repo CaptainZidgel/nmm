@@ -15,6 +15,7 @@ function love.load()
 		i = i+50
 		table.insert(pieces, piece)
 	end
+	pointerCarrying = "nothing"
 	turn = "red"
 	spots = {
 		{x = 300+16, y = 16, id = 1, w = 32, h = 32, resident = "neutral", cons = {2, 10}},
@@ -45,69 +46,13 @@ function love.load()
 	
 end
 
-
 function love.update(dt)
 	mx, my = love.mouse.getPosition()
 	local inbank = 0
 	for i,v in ipairs(pieces) do
-		if phase == 1 then
-			if v.placement == "bank" and turn == v.owner then
-				if mx < v.x + v.r and mx > v.x - v.r and my < v.y + v.r and my > v.y - v.r then
-					if love.mouse.isDown(1) and mouseaction == "" then
-						v.state = "moving"
-						mouseaction = "moving"
-					end
-				end
-				if v.state == "moving" then
-					v.x = mx
-					v.y = my
-					if love.mouse.isDown(1) then
-						for ii,b in ipairs(spots) do
-							if mx < b.x + b.w and mx > b.x and my < b.y + b.h and my > b.y and b.resident == "neutral" then
-								v.x = b.x + 15
-								v.y = b.y + 15
-								v.state = "static"
-								mouseaction = ""
-								v.placement = b.id
-								b.resident = v.owner
-								flipturn()
-							end
-						end
-					end
-				end	
-			end
-		elseif phase == 2 and turn == v.owner then
-				if mx < v.x + v.r and mx > v.x - v.r and my < v.y + v.r and my > v.y - v.r then
-					if love.mouse.isDown(1) and mouseaction == "" then
-						v.state = "moving"
-						mouseaction = "moving"
-						spots[v.placement].resident = "neutral"
-					end
-				end
-				if v.state == "moving" then
-					v.x = mx
-					v.y = my
-					if love.mouse.isDown(1) then
-						for ii,b in ipairs(spots) do
-							if mx < b.x + b.w and mx > b.x and my < b.y + b.h and my > b.y then
-								for index,value in ipairs(spots[v.placement].cons) do
-									if (value == b.id and b.resident == "neutral") or (b.id == v.placement) then
-										v.x = b.x + 15
-										v.y = b.y + 15
-										v.state = "static"
-										mouseaction = ""
-										v.placement = b.id
-										b.resident = v.owner
-										if value == b.id then
-											flipturn()
-										end
-									end
-								end
-							end
-						end
-					end
-				end	
-		
+		if v.state == "moving" then
+			v.x = mx
+			v.y = my
 		end
 		
 		if v.placement ~= "bank" and phase == 1 then
@@ -125,47 +70,46 @@ function love.update(dt)
 	end
 	
 	if spots[1].resident == spots[2].resident and spots[1].resident == spots[3].resident and spots[1].resident ~= "neutral" then
-		print(spots[1].resident .. " wins!")
+		createdMill(spots[1].resident)
 	elseif spots[1].resident == spots[10].resident and spots[1].resident == spots[22].resident and spots[1].resident ~= "neutral" then
-		print(spots[1].resident .. " wins!")
+		createdMill(spots[1].resident)
 	elseif spots[4].resident == spots[5].resident and spots[4].resident == spots[6].resident and spots[4].resident ~= "neutral" then
-		print(spots[4].resident .. " wins!")
+		createdMill(spots[4].resident)
 	elseif spots[7].resident == spots[8].resident and spots[7].resident == spots[9].resident and spots[7].resident ~= "neutral" then
-		print(spots[7].resident .. " wins!")
+		createdMill(spots[7].resident)
 	elseif spots[11].resident == spots[10].resident and spots[11].resident == spots[12].resident and spots[10].resident ~= "neutral" then
-		print(spots[11].resident .. " wins!")
+		createdMill(spots[11].resident)
 	elseif spots[13].resident == spots[14].resident and spots[13].resident == spots[15].resident and spots[13].resident ~= "neutral" then
-		print(spots[13].resident .. " wins!")
+		createdMill(spots[13].resident)
 	elseif spots[4].resident == spots[11].resident and spots[4].resident == spots[19].resident and spots[4].resident ~= "neutral" then
-		print(spots[4].resident .. " wins!")
+		createdMill(spots[4].resident)
 	elseif spots[3].resident == spots[15].resident and spots[3].resident == spots[24].resident and spots[3].resident ~= "neutral" then
-		print(spots[3].resident .. " wins!")
+		createdMill(spots[3].resident)
 	elseif spots[22].resident == spots[23].resident and spots[22].resident == spots[24].resident and spots[22].resident ~= "neutral" then
-		print(spots[22].resident .. " wins!")
+		createdMill(spots[22].resident)
 	elseif spots[6].resident == spots[14].resident and spots[6].resident == spots[21].resident and spots[6].resident ~= "neutral" then
-		print(spots[6].resident .. " wins!")
+		createdMill(spots[6].resident)
 	elseif spots[19].resident == spots[20].resident and spots[19].resident == spots[21].resident and spots[19].resident ~= "neutral" then
-		print(spots[19].resident .. " wins!")
+		createdMill(spots[19].resident)
 	elseif spots[16].resident == spots[17].resident and spots[16].resident == spots[18].resident and spots[16].resident ~= "neutral" then
-		print(spots[16].resident .. " wins!")
+		createdMill(spots[16].resident)
 	elseif spots[17].resident == spots[20].resident and spots[17].resident == spots[23].resident and spots[17].resident ~= "neutral" then
-		print(spots[17].resident .. " wins!")
+		createdMill(spots[17].resident)
 	elseif spots[2].resident == spots[5].resident and spots[2].resident == spots[8].resident and spots[2].resident ~= "neutral" then
-		print(spots[2].resident .. " wins!")
+		createdMill(spots[2].resident)
 	elseif spots[1].resident == spots[4].resident and spots[1].resident == spots[7].resident and spots[1].resident ~= "neutral" then
-		print(spots[1].resident .. " wins!")
+		createdMill(spots[1].resident)
 	elseif spots[3].resident == spots[6].resident and spots[3].resident == spots[9].resident and spots[3].resident ~= "neutral" then
-		print(spots[3].resident .. " wins!")
+		createdMill(spots[3].resident)
 	elseif spots[16].resident == spots[19].resident and spots[16].resident == spots[22].resident and spots[16].resident ~= "neutral" then
-		print(spots[16].resident .. " wins!")
+		createdMill(spots[16].resident)
 	elseif spots[18].resident == spots[21].resident and spots[18].resident == spots[24].resident and spots[18].resident ~= "neutral" then
-		print(spots[18].resident .. " wins!")
+		createdMill(spots[18].resident)
 	elseif spots[7].resident == spots[12].resident and spots[7].resident == spots[16].resident and spots[7].resident ~= "neutral" then
-		print(spots[7].resident .. " wins!")
+		createdMill(spots[7].resident)
 	elseif spots[9].resident == spots[13].resident and spots[9].resident == spots[18].resident and spots[9].resident ~= "neutral" then
-		print(spots[9].resident .. " wins!")
+		createdMill(spots[9].resident)
 	end
-	
 	
 end
 
@@ -175,6 +119,72 @@ function flipturn()
 	else
 		turn = "red"
 	end
+end
+
+function createdMill(team)
+	local otherteam = "blue"
+	--if team == "blue" then otherteam = "red" end
+	--print("Player " .. team .. " created a mill! They get to remove one of " .. otherteam .. "'s tokens!")
+end
+
+function love.mousepressed(mousex, mousey)
+	if phase == 1 then
+		if pointerCarrying == "nothing" then
+			for i,v in ipairs(pieces) do
+				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn == v.owner then
+					if v.state == "static" and v.placement == "bank" then
+						v.state = "moving"
+						mouseaction = "picking"
+						pointerCarrying = v.id
+					end
+				end
+			end
+		else
+			local v = pieces[pointerCarrying]
+			for i,b in ipairs(spots) do
+				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y and b.resident == "neutral" then
+					v.x = b.x + 15
+					v.y = b.y + 15
+					v.state = "static"
+					v.placement = b.id
+					b.resident = v.owner
+					flipturn()
+					pointerCarrying = "nothing"
+				end
+			end
+		end
+	elseif phase == 2 then
+		if pointerCarrying == "nothing" then
+			for i,v in ipairs(pieces) do
+				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and turn == v.owner then
+					v.state = "moving"
+					mouseaction = "picking"
+					spots[v.placement].resident = "neutral"
+					pointerCarrying = v.id
+				end
+			end
+		else
+			local v = pieces[pointerCarrying]
+			for i,b in ipairs(spots) do
+				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y then
+					for index,value in ipairs(spots[v.placement].cons) do
+						if (value == b.id and b.resident == "neutral") or (b.id == v.placement) then
+							v.x = b.x + 15
+							v.y = b.y + 15
+							v.state = "static"
+							v.placement = b.id
+							b.resident = v.owner
+							pointerCarrying = "nothing"
+							if value == b.id then
+								flipturn()
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
 end
 
 function love.draw()
