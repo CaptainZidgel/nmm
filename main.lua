@@ -84,7 +84,6 @@ function checkForMills(placedp) --the placed pieces' location (v.placement)
 end
 
 
-
 function flipturn()
 	if turn == "red" then
 		turn = "blue"
@@ -93,22 +92,6 @@ function flipturn()
 	end
 end
 
---[[function createdMill(team, millspots) --i literally have no idea what this does anymore
-	print("created mill")
-	local otherteam = "blue"
-	if team == "blue" then otherteam = "red" end
-	--print("Player " .. team .. " created a mill! They get to remove one of " .. otherteam .. "'s tokens!")
-	local contains = 0
-	for i,v in pairs(mills) do
-		if i == millspots then
-			contains = 1
-		end
-	end
-	if contains == 0 then
-		needToRemove = 1
-		table.insert(mills, millspots)
-	end
-end]]--
 
 function love.mousepressed(mousex, mousey)
 	if needToRemove == 1 then
@@ -117,13 +100,13 @@ function love.mousepressed(mousex, mousey)
 				if v.state == "static" and v.placement ~= "bank" then
 					spots[v.placement].resident = "neutral"
 					v.placement = "gone"
+					v.x, v.y = 1000, 1000
 					needToRemove = 0
 					flipturn()
 				end
 			end
 		end
-	end
-	if phase == 1 and needToRemove == 0 then
+	elseif phase == 1 then
 		if pointerCarrying == "nothing" then
 			for i,v in ipairs(pieces) do
 				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn == v.owner then
@@ -155,7 +138,7 @@ function love.mousepressed(mousex, mousey)
 				end
 			end
 		end
-	elseif phase == 2 and needToRemove == 0 then
+	elseif phase == 2 then
 		if pointerCarrying == "nothing" then
 			for i,v in ipairs(pieces) do
 				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and turn == v.owner then
