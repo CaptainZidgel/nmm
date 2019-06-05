@@ -49,7 +49,6 @@ function love.load()
 end
 
 function love.update(dt)
-	print(needToRemove)
 	mx, my = love.mouse.getPosition()
 	for i,v in ipairs(pieces) do
 		if v.state == "moving" then
@@ -59,49 +58,32 @@ function love.update(dt)
 	end
 end
 
-function checkForMills()
-	if spots[1].resident == spots[2].resident and spots[1].resident == spots[3].resident and spots[1].resident ~= "neutral" then
-		createdMill(spots[1].resident, {1, 2, 3}) --6
-	elseif spots[1].resident == spots[10].resident and spots[1].resident == spots[22].resident and spots[1].resident ~= "neutral" then
-		createdMill(spots[1].resident, {1, 10, 22}) --220
-	elseif spots[4].resident == spots[5].resident and spots[4].resident == spots[6].resident and spots[4].resident ~= "neutral" then
-		createdMill(spots[4].resident, {4, 5, 6}) --120
-	elseif spots[7].resident == spots[8].resident and spots[7].resident == spots[9].resident and spots[7].resident ~= "neutral" then
-		createdMill(spots[7].resident, {7, 8, 9}) --504
-	elseif spots[11].resident == spots[10].resident and spots[11].resident == spots[12].resident and spots[10].resident ~= "neutral" then
-		createdMill(spots[11].resident, {10, 11, 12}) --1320
-	elseif spots[13].resident == spots[14].resident and spots[13].resident == spots[15].resident and spots[13].resident ~= "neutral" then
-		createdMill(spots[13].resident, {13, 14, 15}) --2730
-	elseif spots[4].resident == spots[11].resident and spots[4].resident == spots[19].resident and spots[4].resident ~= "neutral" then
-		createdMill(spots[4].resident, {4, 11, 19}) --836
-	elseif spots[3].resident == spots[15].resident and spots[3].resident == spots[24].resident and spots[3].resident ~= "neutral" then
-		createdMill(spots[3].resident, {3, 15, 24})
-	elseif spots[22].resident == spots[23].resident and spots[22].resident == spots[24].resident and spots[22].resident ~= "neutral" then
-		createdMill(spots[22].resident, {22, 23, 24})
-	elseif spots[6].resident == spots[14].resident and spots[6].resident == spots[21].resident and spots[6].resident ~= "neutral" then
-		createdMill(spots[6].resident, {6, 14, 21})
-	elseif spots[19].resident == spots[20].resident and spots[19].resident == spots[21].resident and spots[19].resident ~= "neutral" then
-		createdMill(spots[19].resident, {19, 20, 21})
-	elseif spots[16].resident == spots[17].resident and spots[16].resident == spots[18].resident and spots[16].resident ~= "neutral" then
-		createdMill(spots[16].resident, {16, 17, 18})
-	elseif spots[17].resident == spots[20].resident and spots[17].resident == spots[23].resident and spots[17].resident ~= "neutral" then
-		createdMill(spots[17].resident, {17, 20, 23})
-	elseif spots[2].resident == spots[5].resident and spots[2].resident == spots[8].resident and spots[2].resident ~= "neutral" then
-		createdMill(spots[2].resident, {2, 5, 8}) --80
-	elseif spots[1].resident == spots[4].resident and spots[1].resident == spots[7].resident and spots[1].resident ~= "neutral" then
-		createdMill(spots[1].resident, {1, 4, 7}) --28
-	elseif spots[3].resident == spots[6].resident and spots[3].resident == spots[9].resident and spots[3].resident ~= "neutral" then
-		createdMill(spots[3].resident, {3, 6, 9}) --162
-	elseif spots[16].resident == spots[19].resident and spots[16].resident == spots[22].resident and spots[16].resident ~= "neutral" then
-		createdMill(spots[16].resident, {16, 19, 22})
-	elseif spots[18].resident == spots[21].resident and spots[18].resident == spots[24].resident and spots[18].resident ~= "neutral" then
-		createdMill(spots[18].resident, {18, 21, 24})
-	elseif spots[7].resident == spots[12].resident and spots[7].resident == spots[16].resident and spots[7].resident ~= "neutral" then
-		createdMill(spots[7].resident, {7, 12, 16}) --1344
-	elseif spots[9].resident == spots[13].resident and spots[9].resident == spots[18].resident and spots[9].resident ~= "neutral" then
-		createdMill(spots[9].resident, {9, 13, 18}) --2106
+
+allmills = { -- fourth val is "has this Mill been already made?"
+	{1, 2, 3, false},{1, 10, 22, false},{4, 5, 6, false},{7, 8, 9, false},{10, 11, 12, false},{13, 14, 15, false},{4, 11, 19, false},{3, 15, 24, false},
+	{22, 23, 24, false},{6, 14, 21, false},{19, 20, 21, false},{16, 17, 18, false},{17, 20, 23, false},{2, 5, 8, false},{1, 4, 7, false},
+	{3, 6, 9, false},{16, 19, 22, false},{18, 21,24, false},{7, 12, 16, false},{9, 13, 18, false}
+}
+
+function checkForMills(placedp) --the placed pieces' location (v.placement)
+	local continue = false
+	for ind,val in ipairs(allmills) do 
+		for m =1,3 do --evals if the mill-combo is even where the piece was placed
+			if val[m] == placedp and val[4] == false then
+				continue = true
+			end
+		end
+		if continue == true then --evals if the mill-combo is a mill
+			if spots[val[1]].resident == spots[val[2]].resident and spots[val[1]].resident == spots[val[3]].resident and spots[val[1]].resident ~= "neutral" and val[4] == false then
+				print("We've got a mill on our hands" .. " " .. tostring(val[4]))
+				val[4] = true
+				needToRemove = 1
+			end
+		end
 	end
 end
+
+
 
 function flipturn()
 	if turn == "red" then
@@ -111,30 +93,29 @@ function flipturn()
 	end
 end
 
-function createdMill(team, millspots)
+--[[function createdMill(team, millspots) --i literally have no idea what this does anymore
+	print("created mill")
 	local otherteam = "blue"
-	--if team == "blue" then otherteam = "red" end
+	if team == "blue" then otherteam = "red" end
 	--print("Player " .. team .. " created a mill! They get to remove one of " .. otherteam .. "'s tokens!")
-	local contains = false
-	for i,v in ipairs(mills) do
-		if v == millspots then
-			contains = true
+	local contains = 0
+	for i,v in pairs(mills) do
+		if i == millspots then
+			contains = 1
 		end
 	end
-	if contains == true then
-		print("")
-	else
+	if contains == 0 then
 		needToRemove = 1
-		--mills[millspots[1] * millspots[2] * millspots[3]] = millspots
 		table.insert(mills, millspots)
 	end
-end
+end]]--
 
 function love.mousepressed(mousex, mousey)
 	if needToRemove == 1 then
 		for i,v in ipairs(pieces) do
 			if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn ~= v.owner then
 				if v.state == "static" and v.placement ~= "bank" then
+					spots[v.placement].resident = "neutral"
 					v.placement = "gone"
 					needToRemove = 0
 					flipturn()
@@ -142,7 +123,7 @@ function love.mousepressed(mousex, mousey)
 			end
 		end
 	end
-	if phase == 1 then
+	if phase == 1 and needToRemove == 0 then
 		if pointerCarrying == "nothing" then
 			for i,v in ipairs(pieces) do
 				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn == v.owner then
@@ -163,7 +144,7 @@ function love.mousepressed(mousex, mousey)
 					v.placement = b.id
 					b.resident = v.owner
 					pointerCarrying = "nothing"
-					checkForMills()
+					checkForMills(v.placement)
 					inbank = inbank - 1
 					if inbank == 0 then
 						phase = 2
@@ -174,7 +155,7 @@ function love.mousepressed(mousex, mousey)
 				end
 			end
 		end
-	elseif phase == 2 then
+	elseif phase == 2 and needToRemove == 0 then
 		if pointerCarrying == "nothing" then
 			for i,v in ipairs(pieces) do
 				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and turn == v.owner then
@@ -196,7 +177,7 @@ function love.mousepressed(mousex, mousey)
 							v.placement = b.id
 							b.resident = v.owner
 							pointerCarrying = "nothing"
-							checkForMills()
+							checkForMills(v.placement)
 							if value == b.id and needToRemove == 0 then
 								flipturn()
 							end
