@@ -2,7 +2,6 @@ function love.load()
 	mills = {}
 	board = love.graphics.newImage('gfx/nmm_board.png')
 	pieces = {}
-	phase = 1 -- phases are (1) placing pieces, (2) moving placed pieces, (3) Flying- for more info see the wikipedia page for NMM
 	mouseaction = ""
 	redbank = 9
 	bluebank = 9
@@ -98,23 +97,13 @@ function checkForMills(placedp, res) --the placed pieces' location (v.placement)
 end
 
 function flipturn()
-	if phase ~= 1 then
-		if turn == "red" then turn = "blue" else turn = "red" end
-	else
-		if phase == 1 then
-			if turn == "red" and bluebank ~= 0 then 
-				turn = "blue" 
-			elseif turn == "blue" and redbank ~= 0 then 
-				turn = "red" 
-			end
-		end
-	end
+	if turn == "red" then turn = "blue" else turn = "red" end
 end
 
 function love.mousepressed(mousex, mousey)
 	if needToRemove == 1 then							--if need to remove a piece
 		for i,v in ipairs(pieces) do
-			if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn ~= v.owner then
+			if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and v.owner ~= turn then
 				if v.state == "static" and v.placement ~= "bank" then
 					spots[v.placement].resident = "neutral"
 					v.placement = "gone"
@@ -124,8 +113,8 @@ function love.mousepressed(mousex, mousey)
 			end
 		end
 	else
-		if mouseaction ~= "holding" then --if holding 
-			for _,v in ipairs(pieces) do --check all pieces
+		if mouseaction ~= "holding" then 															--if not holding anything, at the time of the click
+			for _,v in ipairs(pieces) do 															--check all pieces
 				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and v.owner == turn then
 					if (turn == "red" and redbank ~= 0) or (turn == "blue" and bluebank ~= 0) then  --if pieces are left in the bank
 						if v.placement == "bank" then 												--if piece in bank
@@ -134,7 +123,7 @@ function love.mousepressed(mousex, mousey)
 							pointerCarrying = v.id
 							if v.placement ~= "bank" then spots[v.placement].resident = "neutral" end
 						end
-					else
+					else																			--if pieces arent left in the bank of the person whose turn it is.
 						v.state = "moving"
 						mouseaction = "holding"
 						pointerCarrying = v.id
@@ -146,14 +135,10 @@ function love.mousepressed(mousex, mousey)
 			local v = pieces[pointerCarrying]
 			for _,b in ipairs(spots) do
 				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y and b.resident == "neutral" then --if clicking empty spot
-					if phase == 1 then
+					if (turn == "red" and redbank ~= 0) or (turn == "blue" and bluebank ~= 0) then
 						place(v, b)
 						inbank = inbank - 1
-						if turn == "red" then redbank = redbank - 1 else bluebank = bluebank - 1 end
-						if inbank == 0 then
-							phase = 2
-						end
-					elseif phase == 2 then
+					elseif (turn == "red" and redbank == 0) or (turn == "blue" and bluebank == 0) then
 						if b.id == v.placement then
 							place(v, b, true)
 						else
@@ -180,6 +165,7 @@ function place(v, b, checkoverride)
 	pointerCarrying = "nothing"	
 	mouseaction = ""
 	b.resident = v.owner
+	if (turn == "red" and redbank > 0) then redbank = redbank - 1 elseif (turn == "blue" and bluebank > 0) then bluebank = bluebank - 1 end
 	if checkoverride == false then
 		checkForMills(v.placement, v.owner)
 	end
@@ -212,5 +198,5 @@ function love.draw()
 	--[[for i,v in ipairs(spots) do						--draws squares around the spots tokens are placable
 		love.graphics.rectangle("line", v.x, v.y, 32, 32)
 	end]]--
-	love.graphics.print("It's " .. turn .. "'s turn in phase " .. phase, 25, 675)
+	love.graphics.print("It's " .. turn .. "'s turn", 25, 675)
 end
