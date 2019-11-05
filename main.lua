@@ -4,6 +4,8 @@ function love.load()
 	pieces = {}
 	phase = 1 -- phases are (1) placing pieces, (2) moving placed pieces, (3) Flying- for more info see the wikipedia page for NMM
 	mouseaction = ""
+	redbank = 9
+	bluebank = 9
 	local i = 50
 	for it = 1,9 do
 		local piece = {x = 225, y = i, r = 25, owner = "red", id = it, placement = "bank", state = "static"}
@@ -46,6 +48,8 @@ function love.load()
 	}
 	inbank = 18
 	needToRemove = 0
+	logs = {}
+	addLog("Game start")
 end
 
 function love.update(dt)
@@ -56,8 +60,12 @@ function love.update(dt)
 			v.y = my
 		end
 	end
+	
+	for i,t in ipairs(logs) do
+		t[2] = t[2] - 0.1
+	end
+	
 end
-
 
 allmills = { -- fourth val is "has this Mill been already made?"
 	{1, 2, 3, false},{1, 10, 22, false},{4, 5, 6, false},{7, 8, 9, false},{10, 11, 12, false},{13, 14, 15, false},{4, 11, 19, false},{3, 15, 24, false},
@@ -65,8 +73,9 @@ allmills = { -- fourth val is "has this Mill been already made?"
 	{3, 6, 9, false},{16, 19, 22, false},{18, 21,24, false},{7, 12, 16, false},{9, 13, 18, false}
 }
 
-function checkForMills(placedp) --the placed pieces' location (v.placement)
+function checkForMills(placedp, res) --the placed pieces' location (v.placement), res is resident
 	local continue = false
+	local positive = false		--if the function returns a positive on checking for a mill
 	for ind,val in ipairs(allmills) do 
 		for m =1,3 do --evals if the mill-combo is even where the piece was placed
 			if val[m] == placedp and val[4] == false then
@@ -74,27 +83,36 @@ function checkForMills(placedp) --the placed pieces' location (v.placement)
 			end
 		end
 		if continue == true then --evals if the mill-combo is a mill
-			if spots[val[1]].resident == spots[val[2]].resident and spots[val[1]].resident == spots[val[3]].resident and spots[val[1]].resident ~= "neutral" and val[4] == false then
+			if spots[val[1]].resident == spots[val[2]].resident and spots[val[1]].resident == spots[val[3]].resident and spots[val[1]].resident == res and val[4] == false then
+				positive = true
 				print("We've got a mill on our hands" .. " " .. tostring(val[4]))
 				val[4] = true
 				needToRemove = 1
+				addLog("Player " .. turn .. " has created a mill\nand gets to remove one of the opponent's token")
+			end
+		end
+	end
+	if positive == false then
+		flipturn()
+	end
+end
+
+function flipturn()
+	if phase ~= 1 then
+		if turn == "red" then turn = "blue" else turn = "red" end
+	else
+		if phase == 1 then
+			if turn == "red" and bluebank ~= 0 then 
+				turn = "blue" 
+			elseif turn == "blue" and redbank ~= 0 then 
+				turn = "red" 
 			end
 		end
 	end
 end
 
-
-function flipturn()
-	if turn == "red" then
-		turn = "blue"
-	else
-		turn = "red"
-	end
-end
-
-
 function love.mousepressed(mousex, mousey)
-	if needToRemove == 1 then
+	if needToRemove == 1 then							--if need to remove a piece
 		for i,v in ipairs(pieces) do
 			if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn ~= v.owner then
 				if v.state == "static" and v.placement ~= "bank" then
@@ -102,67 +120,47 @@ function love.mousepressed(mousex, mousey)
 					v.placement = "gone"
 					v.x, v.y = 1000, 1000
 					needToRemove = 0
-					flipturn()
 				end
 			end
 		end
-	elseif phase == 1 then
-		if pointerCarrying == "nothing" then
-			for i,v in ipairs(pieces) do
-				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and turn == v.owner then
-					if v.state == "static" and v.placement == "bank" then
+	else
+		if mouseaction ~= "holding" then --if holding 
+			for _,v in ipairs(pieces) do --check all pieces
+				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and pointerCarrying == "nothing" and v.owner == turn then
+					if (turn == "red" and redbank ~= 0) or (turn == "blue" and bluebank ~= 0) then  --if pieces are left in the bank
+						if v.placement == "bank" then 												--if piece in bank
+							v.state = "moving"
+							mouseaction = "holding"
+							pointerCarrying = v.id
+							if v.placement ~= "bank" then spots[v.placement].resident = "neutral" end
+						end
+					else
 						v.state = "moving"
-						mouseaction = "picking"
+						mouseaction = "holding"
 						pointerCarrying = v.id
+						spots[v.placement].resident = "neutral"
 					end
 				end
 			end
-		else
+		elseif mouseaction == "holding" then	
 			local v = pieces[pointerCarrying]
-			for i,b in ipairs(spots) do
-				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y and b.resident == "neutral" then
-					v.x = b.x + 15
-					v.y = b.y + 15
-					v.state = "static"
-					v.placement = b.id
-					b.resident = v.owner
-					pointerCarrying = "nothing"
-					checkForMills(v.placement)
-					inbank = inbank - 1
-					if inbank == 0 then
-						phase = 2
-					end
-					if needToRemove == 0 then
-						flipturn()
-					end
-				end
-			end
-		end
-	elseif phase == 2 then
-		if pointerCarrying == "nothing" then
-			for i,v in ipairs(pieces) do
-				if mousex < v.x + v.r and mousex > v.x - v.r and mousey < v.y + v.r and mousey > v.y - v.r and turn == v.owner then
-					v.state = "moving"
-					mouseaction = "picking"
-					spots[v.placement].resident = "neutral"
-					pointerCarrying = v.id
-				end
-			end
-		else
-			local v = pieces[pointerCarrying]
-			for i,b in ipairs(spots) do
-				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y then
-					for index,value in ipairs(spots[v.placement].cons) do
-						if (value == b.id and b.resident == "neutral") or (b.id == v.placement) then
-							v.x = b.x + 15
-							v.y = b.y + 15
-							v.state = "static"
-							v.placement = b.id
-							b.resident = v.owner
-							pointerCarrying = "nothing"
-							checkForMills(v.placement)
-							if value == b.id and needToRemove == 0 then
-								flipturn()
+			for _,b in ipairs(spots) do
+				if mousex < b.x + b.w and mousex > b.x and mousey < b.y + b.h and mousey > b.y and b.resident == "neutral" then --if clicking empty spot
+					if phase == 1 then
+						place(v, b)
+						inbank = inbank - 1
+						if turn == "red" then redbank = redbank - 1 else bluebank = bluebank - 1 end
+						if inbank == 0 then
+							phase = 2
+						end
+					elseif phase == 2 then
+						if b.id == v.placement then
+							place(v, b, true)
+						else
+							for index,value in ipairs(spots[v.placement].cons) do							--value is a consecutive spot to the spot piece used to be at
+								if (value == b.id and b.resident == "neutral") then --if clicked an adjacent, empty spot
+									place(v, b)
+								end
 							end
 						end
 					end
@@ -170,7 +168,26 @@ function love.mousepressed(mousex, mousey)
 			end
 		end
 	end
-	
+end
+
+function place(v, b, checkoverride)
+	checkoverride = checkoverride or false
+	v.x = b.x + 15                                                          --place piece at spot
+	v.y = b.y + 15
+	v.state = "static"
+	v.placement = b.id														--record piece location
+	b.resident = v.owner													--set resident (red/blue) for spot
+	pointerCarrying = "nothing"	
+	mouseaction = ""
+	b.resident = v.owner
+	if checkoverride == false then
+		checkForMills(v.placement, v.owner)
+	end
+end
+
+function addLog(text)
+	textItem = {text, string.len(text)*1.5} --second param is "age" of the item.
+	table.insert(logs, textItem)
 end
 
 function love.draw()
@@ -187,8 +204,13 @@ function love.draw()
 			end
 		end
 	end
+	for i,t in ipairs(logs) do
+		love.graphics.setColor(1, 1, 1, t[2])
+		love.graphics.print(t[1], 25, 620)
+	end
+	love.graphics.setColor(1, 1, 1)
 	--[[for i,v in ipairs(spots) do						--draws squares around the spots tokens are placable
 		love.graphics.rectangle("line", v.x, v.y, 32, 32)
 	end]]--
-	love.graphics.print("It's " .. turn .. "'s turn", 100, 675)
+	love.graphics.print("It's " .. turn .. "'s turn in phase " .. phase, 25, 675)
 end
